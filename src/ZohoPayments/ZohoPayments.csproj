@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <PackageId>ZohoPayments</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Zoho Payments</Authors>
+    <Description>Official .NET SDK for the Zoho Payments API (IN, IN Sandbox, US editions)</Description>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/zoho/zoho-payments-dotnet-sdk</RepositoryUrl>
+    <PackageTags>zoho;payments;api;sdk</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <AssemblyName>ZohoPayments</AssemblyName>
+    <RootNamespace>ZohoPayments</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+
+</Project>
