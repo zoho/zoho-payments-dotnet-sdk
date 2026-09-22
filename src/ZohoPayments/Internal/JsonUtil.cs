@@ -20,6 +20,7 @@ namespace ZohoPayments.Internal
         private static JsonSerializerOptions CreateDeserializeOptions()
         {
             var options = new JsonSerializerOptions();
+            options.Converters.Add(new TolerantStringConverter());
             options.Converters.Add(new TolerantNullableDoubleConverter());
             options.Converters.Add(new TolerantNullableLongConverter());
             options.Converters.Add(new TolerantNullableIntConverter());
@@ -72,13 +73,31 @@ namespace ZohoPayments.Internal
 
         public static JsonElement GetObjectRequired(JsonElement? body, params string[] keys)
         {
-            var envelope = GetObject(body, keys);
-            if (envelope is null)
+            var current = body;
+            foreach (var key in keys)
             {
-                throw new ZohoPaymentsException($"Expected JSON object under one of keys: {string.Join(", ", keys)}");
+                if (current is null)
+                {
+                    throw new ZohoPaymentsException(
+                        $"Response body is null; expected object at key path [{string.Join(", ", keys)}]");
+                }
+
+                if (!current.Value.TryGetProperty(key, out var next) || next.ValueKind != JsonValueKind.Object)
+                {
+                    throw new ZohoPaymentsException(
+                        $"Response body missing expected resource key '{key}' in path [{string.Join(", ", keys)}]");
+                }
+
+                current = next;
             }
 
-            return envelope.Value;
+            if (current is null)
+            {
+                throw new ZohoPaymentsException(
+                    $"Response body is null; expected object at key path [{string.Join(", ", keys)}]");
+            }
+
+            return current.Value;
         }
 
         // Returns the first array value found under any of the keys.

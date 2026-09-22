@@ -217,6 +217,23 @@ var refund = client.Refunds().Create("6485000000045015", new RefundCreateParams(
 var r = client.Refunds().Get(refund.RefundId!);
 ```
 
+### Payouts
+
+```csharp
+// List payouts
+ListResponse<Payout> payouts = client.Payouts().List(
+    new PayoutListParams(status: "paid", perPage: 25));
+
+// Retrieve one payout
+var payout = client.Payouts().Get(payouts.Data[0].PayoutId!);
+Console.WriteLine(payout.TransactionSummary?.TotalAmount);
+
+// List the transactions settled in a payout
+ListResponse<PayoutTransaction> transactions = client.Payouts().ListTransactions(
+    payout.PayoutId!,
+    new PayoutTransactionListParams(perPage: 50));
+```
+
 ### Mandates (IN only)
 
 ```csharp
@@ -241,6 +258,72 @@ var collect = client.Collect(); // throws InvalidOperationException on Edition.U
 
 var account = collect.Create(new VirtualAccountCreateParams(description: "Order #1234"));
 collect.Close(account.VirtualAccountId!);
+```
+
+### Split Settlement (IN only)
+
+```csharp
+var splitSettlement = client.SplitSettlement(); // throws InvalidOperationException on Edition.US
+
+// Onboard a connected account
+splitSettlement.CreateConnectedAccount(new ConnectedAccountCreateParams(
+    accountName: "Acme Retail",
+    emailId: "owner@acme.example",
+    pan: "ABCDE1234F",
+    mcc: "5399",
+    businessDescription: "General merchandise",
+    connectedAccountBankAccount: new ConnectedAccountBankAccountParams(
+        routingNumber: "HDFC0000123",
+        accountNumber: "50100123456789")));
+
+ListResponse<ConnectedAccountSummary> accounts = splitSettlement.ListConnectedAccounts();
+var account = splitSettlement.GetConnectedAccount(accounts.Data[0].ConnectedAccountId!);
+
+// Split a payment across connected accounts.
+// The request can partially succeed - check each split's own status.
+var created = splitSettlement.CreateTransfer(new TransferCreateParams(
+    paymentId: "6485000000045015",
+    transferSplit: new[]
+    {
+        new TransferSplitParams(
+            connectedAccountId: account.ConnectedAccountId!,
+            amount: "250.00",
+            description: "Vendor share"),
+    }));
+
+foreach (var split in created.Splits!)
+{
+    Console.WriteLine($"{split.ConnectedAccountId}: {split.Status} {split.ErrorCode}");
+}
+
+var transfer = splitSettlement.GetTransfer(created.Splits![0].TransferId!);
+ListResponse<TransferSummary> transfers = splitSettlement.ListTransfers(
+    new TransferListParams(connectedAccountId: account.ConnectedAccountId!));
+
+// Reverse part of a transfer
+var reversal = splitSettlement.CreateTransferReversal(new TransferReversalCreateParams(
+    transferId: transfer.TransferId!,
+    reversalAmount: "100.00",
+    description: "Partial reversal"));
+
+var reversalDetail = splitSettlement.GetTransferReversal(reversal.TransferReversalId!);
+ListResponse<TransferReversal> reversals = splitSettlement.ListTransferReversals();
+
+// Connected account ledger and payouts
+ListResponse<ConnectedAccountTransaction> ledger =
+    splitSettlement.ListConnectedAccountTransactions(
+        account.ConnectedAccountId!,
+        new ConnectedAccountTransactionListParams(transactionType: "charge"));
+
+ListResponse<ConnectedAccountPayoutSummary> accountPayouts =
+    splitSettlement.ListConnectedAccountPayouts(account.ConnectedAccountId!);
+
+var accountPayout = splitSettlement.GetConnectedAccountPayout(
+    account.ConnectedAccountId!, accountPayouts.Data[0].PayoutId!);
+
+ListResponse<ConnectedAccountPayoutTransaction> payoutTransactions =
+    splitSettlement.ListConnectedAccountPayoutTransactions(
+        account.ConnectedAccountId!, accountPayout.PayoutId!);
 ```
 
 ### Payment Methods & Payment Method Sessions (US only)

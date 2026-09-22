@@ -32,10 +32,12 @@ namespace ZohoPayments
         private readonly CustomerService _customers;
         private readonly PaymentService _payments;
         private readonly RefundService _refunds;
+        private readonly PayoutService _payouts;
         private readonly PaymentMethodService _paymentMethods;
         private readonly PaymentMethodSessionService _paymentMethodSessions;
         private readonly MandateService _mandates;
         private readonly CollectService _collect;
+        private readonly SplitSettlementService _splitSettlement;
 
         private volatile bool _closed;
         private readonly object _closeLock = new object();
@@ -51,10 +53,12 @@ namespace ZohoPayments
             _customers = new CustomerService(httpClient, edition);
             _payments = new PaymentService(httpClient, edition);
             _refunds = new RefundService(httpClient);
+            _payouts = new PayoutService(httpClient);
             _paymentMethods = new PaymentMethodService(httpClient);
             _paymentMethodSessions = new PaymentMethodSessionService(httpClient);
             _mandates = new MandateService(httpClient);
             _collect = new CollectService(httpClient);
+            _splitSettlement = new SplitSettlementService(httpClient);
         }
 
         public PaymentLinkService PaymentLinks() => _paymentLinks;
@@ -66,6 +70,9 @@ namespace ZohoPayments
         public PaymentService Payments() => _payments;
 
         public RefundService Refunds() => _refunds;
+
+        /// <summary>Payouts API (<c>/payouts</c>). Available on all editions.</summary>
+        public PayoutService Payouts() => _payouts;
 
         /// <summary>Saved payment methods (<c>/paymentmethods</c>). Requires <see cref="Edition.US"/>.</summary>
         /// <exception cref="System.InvalidOperationException">if this client was built with an India edition.</exception>
@@ -113,6 +120,16 @@ namespace ZohoPayments
             }
 
             return _collect;
+        }
+
+        public SplitSettlementService SplitSettlement()
+        {
+            if (!_edition.IsIn())
+            {
+                throw new InvalidOperationException("SplitSettlement() is available only on Edition.IN / Edition.IN_SANDBOX");
+            }
+
+            return _splitSettlement;
         }
 
         /// <summary>
