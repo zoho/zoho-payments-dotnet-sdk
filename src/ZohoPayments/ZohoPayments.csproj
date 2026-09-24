@@ -9,7 +9,7 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
 
     <PackageId>ZohoPayments</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>Zoho Payments</Authors>
     <Description>Official .NET SDK for the Zoho Payments API (IN, IN Sandbox, US editions)</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
