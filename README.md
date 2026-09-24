@@ -24,7 +24,7 @@ dotnet add package ZohoPayments
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="ZohoPayments" Version="1.0.0" />
+  <PackageReference Include="ZohoPayments" Version="1.0.1" />
 </ItemGroup>
 ```
 
